@@ -1,0 +1,32 @@
+meta {
+  name: Create Reservation
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/reservations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "spaceId": 1,
+    "startTime": "2026-07-01T09:00:00.000Z",
+    "endTime": "2026-07-01T11:00:00.000Z"
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  test("totalPrice is a number", function() {
+    expect(res.body.totalPrice).to.be.a("number");
+  });
+}

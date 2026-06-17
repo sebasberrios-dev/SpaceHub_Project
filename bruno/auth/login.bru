@@ -1,0 +1,28 @@
+meta {
+  name: Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "test@example.com",
+    "password": "password123"
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+    bru.setEnvVar("token", res.body.token);
+  });
+  test("invalid credentials returns 401", function() {
+    // tested in login-invalid.bru
+  });
+}

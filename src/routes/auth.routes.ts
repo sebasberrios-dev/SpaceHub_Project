@@ -1,15 +1,15 @@
-import { Router } from 'express'
-import { createHash } from 'crypto'
-import jwt from 'jsonwebtoken'
-import prisma from '../lib/prisma'
+import { Router } from "express";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import prisma from "../lib/prisma";
 
-const router = Router()
-const JWT_SECRET = process.env.JWT_SECRET || 'secret123'
+const router = Router();
+const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 
-router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body
+router.post("/register", async (req, res) => {
+  const { name, email, password } = req.body;
 
-  const hashedPassword = createHash('md5').update(password).digest('hex')
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
     const user = await prisma.user.create({
@@ -17,48 +17,62 @@ router.post('/register', async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        role: 'member'
-      }
-    })
+        role: "member",
+      },
+    });
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET
-    )
+      { userId: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+    );
 
     res.status(201).json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
-      token
-    })
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+    });
   } catch (error: any) {
-    res.status(500).json({ error: error.message })
+    res.status(500).json({ error: error.message });
   }
-})
+});
 
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body
+    const { email, password } = req.body;
 
-    const hashedPassword = createHash('md5').update(password).digest('hex')
+    const user = await prisma.user.findUnique({ where: { email } });
 
-    const user = await prisma.user.findUnique({ where: { email } })
+    if (!user) {
+      return res.status(401).json({ error: "invalid credentials" });
+    }
 
-    if (!user || user.password !== hashedPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' })
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      return res.status(401).json({ error: "invalid credentials" });
     }
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET
-    )
+      { userId: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+    );
 
     res.json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
-      token
-    })
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+    });
   } catch (error: any) {
-    res.status(500).json({ error: error.message })
+    res.status(500).json({ error: error.message });
   }
-})
+});
 
-export default router
+export default router;

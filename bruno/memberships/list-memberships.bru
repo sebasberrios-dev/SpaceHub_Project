@@ -1,0 +1,24 @@
+meta {
+  name: List Memberships
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/memberships
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("member gets 403", function() {
+    // tested in list-memberships-member.bru
+  });
+}

@@ -1,27 +1,44 @@
-import { Request, Response, NextFunction } from 'express'
-import jwt from 'jsonwebtoken'
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret123'
+const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization
+export const authenticate = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token required' })
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "token required" });
   }
 
-  const token = authHeader.split(' ')[1]
+  const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.decode(token) as any
-
-    if (!decoded) {
-      return res.status(401).json({ error: 'Invalid token' })
-    }
-
-    req.user = decoded
-    next()
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' })
+    return res.status(401).json({ error: "invalid token" });
   }
-}
+};
+
+export const requireAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ error: "admin access required" });
+  }
+  next();
+};
+
+export const onlyMember = (req: Request, res: Response, next: NextFunction) => {
+  if (req.user?.role === "admin") {
+    return res.status(403).json({ error: "only members section" });
+  }
+  next();
+};

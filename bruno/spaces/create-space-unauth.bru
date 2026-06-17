@@ -1,0 +1,27 @@
+meta {
+  name: Create Space Unauthenticated
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/spaces
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Sala Sin Auth",
+    "type": "private_room",
+    "capacity": 5,
+    "pricePerHour": 30,
+    "location": "Sede Norte"
+  }
+}
+
+tests {
+  test("status 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}
