@@ -12,17 +12,23 @@ post {
 
 body:json {
   {
-    "email": "test@example.com",
+    "email": "{{testEmail}}",
     "password": "password123"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("token", res.body.token);
   }
 }
 
 tests {
   test("status 200", function() {
     expect(res.status).to.equal(200);
-    bru.setEnvVar("token", res.body.token);
   });
-  test("invalid credentials returns 401", function() {
-    // tested in login-invalid.bru
+  test("has token", function() {
+    expect(res.body.token).to.be.a("string");
   });
 }
+

@@ -1,0 +1,17 @@
+meta {
+  name: List Reservations Unauthenticated
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/reservations
+  body: none
+  auth: none
+}
+
+tests {
+  test("status 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

@@ -122,7 +122,7 @@ The server will be available at `http://localhost:3000`.
 
 | Method | Path | Description | Auth |
 |--------|------|-------------|------|
-| `POST` | `/api/reservations` | Create a booking | Member |
+| `POST` | `/api/reservations` | Create a booking | Member / Admin |
 | `GET` | `/api/reservations` | List bookings | Member / Admin |
 | `GET` | `/api/reservations/:id` | Get a single booking | Member / Admin |
 | `PATCH` | `/api/reservations/:id/cancel` | Cancel a booking | Member / Admin |
@@ -198,7 +198,7 @@ npm test
 
 The collection is located in `bruno/` and uses the `local` environment (`http://localhost:3000/api`).
 
-Before running tests that require authentication, set the `token` and `adminToken` variables in `bruno/environments/local.bru` with valid JWT tokens obtained from the login endpoint.
+The suite is fully autonomous — tokens are generated automatically by chaining register and login at the start of the collection. No manual token configuration is required.
 
 ---
 
@@ -209,10 +209,10 @@ Before running tests that require authentication, set the `token` and `adminToke
 │   ├── bruno.json
 │   ├── environments/
 │   │   └── local.bru
-│   ├── auth/
-│   ├── spaces/
-│   ├── reservations/
-│   └── memberships/
+│   ├── 01-auth/
+│   ├── 02-spaces/
+│   ├── 03-reservations/
+│   └── 04-memberships/
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/
@@ -221,9 +221,10 @@ Before running tests that require authentication, set the `token` and `adminToke
 │   ├── docs/
 │   │   └── openapi.ts            # OpenAPI spec
 │   ├── lib/
-│   │   └── prisma.ts             # Prisma client instance
+│   │   ├── prisma.ts             # Prisma client instance
+│   │   └── booking.utils.ts      # Shared overlap filter
 │   ├── middleware/
-│   │   └── auth.middleware.ts    # authenticate, requireAdmin, onlyMember
+│   │   └── auth.middleware.ts    # authenticate, requireAdmin
 │   ├── routes/
 │   │   ├── auth.routes.ts
 │   │   ├── spaces.routes.ts
@@ -289,7 +290,7 @@ This project was inherited from a previous development team. The following issue
 
 - **JWT verification:** The authentication middleware was using `jwt.decode()` instead of `jwt.verify()`, meaning any forged token with an arbitrary payload was accepted without signature validation. Fixed to use `jwt.verify()`.
 - **Role in JWT payload:** The token issued on login and register did not include the user's role, making role-based access control impossible. The `role` field is now included in the payload.
-- **Role-based access control:** No authorization middleware existed. Added `requireAdmin` and `onlyMember` middleware applied to all relevant routes. Admin-only routes now reject member tokens with `403`. The booking creation route is restricted to members only.
+- **Role-based access control:** No authorization middleware existed. Added `requireAdmin` middleware applied to all admin routes. Admin-only routes now reject member tokens with `403`.
 - **Reservation ownership:** Any authenticated user could list all reservations, view details of any reservation, and cancel reservations belonging to other users. Fixed: members now only see and can cancel their own reservations.
 - **Password hashing:** Passwords were hashed with MD5, which is cryptographically broken for password storage. Replaced with `bcrypt` with a cost factor of 10.
 - **GraphQL endpoint removed:** The previous team added a GraphQL layer that was not part of the project requirements. It exposed user password hashes in queries and used `jwt.decode()` without verification. The endpoint and all related code were removed.
@@ -308,4 +309,9 @@ This project was inherited from a previous development team. The following issue
 - **Memberships:** Both membership endpoints were empty stubs. Implemented `GET /api/memberships` (returns memberships with user data) and `PATCH /api/memberships/:userId` (updates the plan with existence check).
 - **Schema corrections:** Added `location` field to the `Space` model. Changed `totalPrice` from `String` to `Float` in the `Booking` model. A migration with manual SQL casting was applied to handle existing data.
 - **OpenAPI documentation:** Full OpenAPI 3.0 spec covering all endpoints, parameters, request bodies, and response codes. Served interactively via `swagger-ui-express` at `/api/docs`.
-- **Bruno test suite:** Complete test collection in `bruno/` covering all endpoints with at least one success case and one error case each. Runnable with `npm test`.
+- **Bruno test suite:** Complete test collection in `bruno/` covering all endpoints with at least one success case and one error case each. Runnable with `npm test`. Suite is fully autonomous — tokens and resource IDs are generated dynamically via `script:post-response` blocks.
+- **Input validation:** Email uniqueness returns `409` instead of `500`. Invalid membership plans return `400`. Bookings with `endTime` before `startTime` return `400`.
+- **Membership on register:** User registration now creates a default `basic` membership (1 year validity) in the same database transaction.
+- **Active memberships filter:** `GET /api/memberships` only returns memberships where `endDate` is in the future.
+- **JWT_SECRET required:** Server fails at startup with a clear error if `JWT_SECRET` is not set in the environment.
+- **Overlap logic extracted:** Booking conflict detection extracted to `src/lib/booking.utils.ts` and reused in both reservations and space availability filter.

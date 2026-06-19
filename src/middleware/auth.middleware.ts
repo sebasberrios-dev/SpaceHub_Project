@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "secret123";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
 
 export const authenticate = (
   req: Request,
@@ -32,13 +36,6 @@ export const requireAdmin = (
 ) => {
   if (req.user?.role !== "admin") {
     return res.status(403).json({ error: "admin access required" });
-  }
-  next();
-};
-
-export const onlyMember = (req: Request, res: Response, next: NextFunction) => {
-  if (req.user?.role === "admin") {
-    return res.status(403).json({ error: "only members section" });
   }
   next();
 };

@@ -24,6 +24,12 @@ body:json {
   }
 }
 
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("spaceId", res.body.id);
+  }
+}
+
 tests {
   test("status 201", function() {
     expect(res.status).to.equal(201);

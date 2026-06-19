@@ -1,15 +1,20 @@
 import { Router } from "express";
 import prisma from "../lib/prisma";
-import { authenticate, onlyMember } from "../middleware/auth.middleware";
+import { authenticate } from "../middleware/auth.middleware";
+import { buildOverlapFilter } from "../lib/booking.utils";
 
 const router = Router();
 
-router.post("/", authenticate, onlyMember, async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   const { spaceId, startTime, endTime } = req.body;
   const userId = req.user.userId;
 
   const start = new Date(startTime);
   const end = new Date(endTime);
+
+  if (end <= start) {
+    return res.status(400).json({ error: "endTime must be after startTime" });
+  }
 
   try {
     const space = await prisma.space.findUnique({
@@ -24,7 +29,7 @@ router.post("/", authenticate, onlyMember, async (req, res) => {
       where: {
         spaceId: parseInt(spaceId),
         status: { not: "canceled" },
-        AND: [{ startTime: { lt: end } }, { endTime: { gt: start } }],
+        ...buildOverlapFilter(start, end),
       },
     });
 
@@ -46,6 +51,8 @@ router.post("/", authenticate, onlyMember, async (req, res) => {
         spaceId: parseInt(spaceId),
         startTime: start,
         endTime: end,
+        // reservations are created directly as "confirmed" since availability
+        // is verified before creation. No manual approval step is required.
         status: "confirmed",
         totalPrice,
       },

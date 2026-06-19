@@ -1,6 +1,7 @@
 import { Router } from "express";
 import prisma from "../lib/prisma";
 import { authenticate, requireAdmin } from "../middleware/auth.middleware";
+import { buildOverlapFilter } from "../lib/booking.utils";
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.get("/", async (req, res) => {
     filters.bookings = {
       none: {
         status: { not: "canceled" },
-        AND: [{ startTime: { lt: dayEnd } }, { endTime: { gt: dayStart } }],
+        ...buildOverlapFilter(dayStart, dayEnd),
       },
     };
   }

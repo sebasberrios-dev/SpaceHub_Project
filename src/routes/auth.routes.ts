@@ -4,7 +4,11 @@ import jwt from "jsonwebtoken";
 import prisma from "../lib/prisma";
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || "secret123";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
 
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
@@ -12,13 +16,30 @@ router.post("/register", async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: "member",
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: "member",
+        },
+      });
+
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setFullYear(endDate.getFullYear() + 1);
+
+      await tx.membership.create({
+        data: {
+          userId: newUser.id,
+          plan: "basic",
+          startDate,
+          endDate,
+        },
+      });
+
+      return newUser;
     });
 
     const token = jwt.sign(
@@ -36,6 +57,9 @@ router.post("/register", async (req, res) => {
       token,
     });
   } catch (error: any) {
+    if (error.code === "P2002") {
+      return res.status(409).json({ error: "email already in use" });
+    }
     res.status(500).json({ error: error.message });
   }
 });

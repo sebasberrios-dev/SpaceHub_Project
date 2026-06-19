@@ -13,9 +13,13 @@ post {
 body:json {
   {
     "name": "Test User",
-    "email": "test@example.com",
+    "email": "{{testEmail}}",
     "password": "password123"
   }
+}
+
+script:pre-request {
+  bru.setEnvVar("testEmail", "test_" + Date.now() + "@example.com");
 }
 
 tests {
@@ -26,3 +30,4 @@ tests {
     expect(res.body.token).to.be.a("string");
   });
 }
+

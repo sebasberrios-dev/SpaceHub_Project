@@ -7,7 +7,7 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "bru run bruno/ --env local"
+    "test": "cd bruno && bru run --env local"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
