@@ -14,6 +14,7 @@ REST API for managing coworking spaces, bookings, and memberships. Built with No
 - **Auth:** JWT + bcrypt
 - **Docs:** OpenAPI 3.0 via swagger-ui-express
 - **Tests:** Bruno CLI
+- **GraphQL:** graphql-http (queries) + graphql-ws (subscriptions)
 
 ---
 
@@ -136,6 +137,42 @@ The server will be available at `http://localhost:3000`.
 | `GET` | `/api/memberships` | List all memberships | Admin |
 | `PATCH` | `/api/memberships/:userId` | Update a user's membership plan | Admin |
 
+### GraphQL
+
+| Transport | Endpoint | Description | Auth |
+|-----------|----------|-------------|------|
+| HTTP `POST` | `/api/graphql` | Analytics query | Admin |
+| WebSocket | `ws://localhost:3000/api/graphql` | Space availability subscription | Public |
+
+#### Analytics query (admin only)
+
+```graphql
+query {
+  occupancyAnalytics(startDate: "2026-01-01", endDate: "2026-12-31") {
+    totalRevenue
+    occupancyByLocation { location spaceCount bookedHours occupancyRate }
+    occupancyByType     { type spaceCount bookedHours occupancyRate }
+    revenueByPeriod     { period revenue }
+    expiringMemberships { userId userName plan endDate }
+    topUsers            { userId userName bookingCount totalSpent }
+  }
+}
+```
+
+`startDate` and `endDate` are optional — defaults to the last 30 days.
+
+#### Space availability subscription
+
+```graphql
+subscription {
+  spaceAvailability {
+    spaceId spaceName location isAvailable startTime endTime
+  }
+}
+```
+
+Fires in real time whenever a booking is created. Connect via any `graphql-transport-ws` compatible client to `ws://localhost:3000/api/graphql`.
+
 ---
 
 ## Authentication
@@ -212,7 +249,8 @@ The suite is fully autonomous — tokens are generated automatically by chaining
 │   ├── 01-auth/
 │   ├── 02-spaces/
 │   ├── 03-reservations/
-│   └── 04-memberships/
+│   ├── 04-memberships/
+│   └── 05-graphql/
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/
@@ -220,6 +258,11 @@ The suite is fully autonomous — tokens are generated automatically by chaining
 │   ├── index.ts                  # Entry point
 │   ├── docs/
 │   │   └── openapi.ts            # OpenAPI spec
+│   ├── graphql/
+│   │   ├── pubsub.ts             # PubSub instance
+│   │   ├── typeDefs.ts           # GraphQL SDL
+│   │   ├── resolvers.ts          # Query and Subscription resolvers
+│   │   └── schema.ts             # makeExecutableSchema
 │   ├── lib/
 │   │   ├── prisma.ts             # Prisma client instance
 │   │   └── booking.utils.ts      # Shared overlap filter
@@ -315,3 +358,5 @@ This project was inherited from a previous development team. The following issue
 - **Active memberships filter:** `GET /api/memberships` only returns memberships where `endDate` is in the future.
 - **JWT_SECRET required:** Server fails at startup with a clear error if `JWT_SECRET` is not set in the environment.
 - **Overlap logic extracted:** Booking conflict detection extracted to `src/lib/booking.utils.ts` and reused in both reservations and space availability filter.
+- **GraphQL analytics panel:** `POST /api/graphql` exposes an `occupancyAnalytics` query (admin-only) returning occupancy rate by location and space type, accumulated revenue by period, memberships expiring in the next 30 days, and top users by booking activity.
+- **GraphQL real-time subscription:** WebSocket endpoint at `ws://localhost:3000/api/graphql` exposes a `spaceAvailability` subscription. Every time a booking is created, all connected clients receive an event with the space ID, name, location, and the booked time range.

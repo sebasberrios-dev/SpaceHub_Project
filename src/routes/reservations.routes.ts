@@ -1,6 +1,7 @@
 import { Router } from "express";
 import prisma from "../lib/prisma";
 import { authenticate } from "../middleware/auth.middleware";
+import { pubsub, BOOKING_CREATED } from "../graphql/pubsub";
 import { buildOverlapFilter } from "../lib/booking.utils";
 
 const router = Router();
@@ -55,6 +56,17 @@ router.post("/", authenticate, async (req, res) => {
         // is verified before creation. No manual approval step is required.
         status: "confirmed",
         totalPrice,
+      },
+    });
+
+    pubsub.publish(BOOKING_CREATED, {
+      spaceAvailability: {
+        spaceId: booking.spaceId,
+        spaceName: space.name,
+        location: space.location,
+        isAvailable: false,
+        startTime: booking.startTime.toISOString(),
+        endTime: booking.endTime.toISOString(),
       },
     });
 

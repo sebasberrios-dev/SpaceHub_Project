@@ -1,0 +1,33 @@
+meta {
+  name: GraphQL Analytics Admin
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "query": "{ occupancyAnalytics { totalRevenue occupancyByLocation { location spaceCount bookedHours occupancyRate } occupancyByType { type spaceCount bookedHours occupancyRate } revenueByPeriod { period revenue } expiringMemberships { userId userName plan endDate } topUsers { userId userName bookingCount totalSpent } } }"
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("returns analytics data", function() {
+    expect(res.body.data.occupancyAnalytics).to.be.an("object");
+    expect(res.body.data.occupancyAnalytics.totalRevenue).to.be.a("number");
+    expect(res.body.data.occupancyAnalytics.occupancyByLocation).to.be.an("array");
+    expect(res.body.data.occupancyAnalytics.topUsers).to.be.an("array");
+  });
+}
