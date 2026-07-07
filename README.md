@@ -88,6 +88,7 @@ The server will be available at `http://localhost:3000`.
 | `npm run dev` | Start server in development mode with hot reload |
 | `npm run build` | Compile TypeScript to JavaScript |
 | `npm start` | Start compiled production server |
+| `npm run seed` | Seed the database with the admin user required by the test suite |
 | `npm test` | Run the Bruno test suite |
 
 ---
@@ -171,7 +172,7 @@ subscription {
 }
 ```
 
-Fires in real time whenever a booking is created. Connect via any `graphql-transport-ws` compatible client to `ws://localhost:3000/api/graphql`.
+Fires in real time whenever a booking is created (`isAvailable: false`) or cancelled (`isAvailable: true`). Connect via any `graphql-transport-ws` compatible client to `ws://localhost:3000/api/graphql`.
 
 ---
 
@@ -235,7 +236,13 @@ npm test
 
 The collection is located in `bruno/` and uses the `local` environment (`http://localhost:3000/api`).
 
-The suite is fully autonomous — tokens are generated automatically by chaining register and login at the start of the collection. No manual token configuration is required.
+The suite is fully autonomous — tokens and resource IDs are generated dynamically via `script:post-response` blocks. Before the first run, seed the admin user:
+
+```bash
+npm run seed
+```
+
+The seed uses `upsert`, so running it multiple times is safe.
 
 ---
 
@@ -290,16 +297,16 @@ The suite is fully autonomous — tokens are generated automatically by chaining
 | name | String | Full name |
 | email | String | Unique email |
 | password | String | bcrypt hash |
-| role | String | `member` or `admin` |
+| role | Enum | `member` or `admin` |
 
 ### Space
 | Field | Type | Description |
 |-------|------|-------------|
 | id | Int | Unique identifier |
 | name | String | Space name |
-| type | String | `individual_desk`, `private_room`, or `business_suite` |
+| type | Enum | `individual_desk`, `private_room`, or `business_suite` |
 | capacity | Int | Maximum number of people |
-| pricePerHour | Int | Hourly rate |
+| pricePerHour | Float | Hourly rate (supports decimals) |
 | location | String | Branch or location name |
 | isActive | Boolean | Inactive spaces are hidden from the catalog |
 
@@ -311,7 +318,7 @@ The suite is fully autonomous — tokens are generated automatically by chaining
 | spaceId | Int | Reference to the space |
 | startTime | DateTime | Booking start |
 | endTime | DateTime | Booking end |
-| status | String | `confirmed` or `canceled` |
+| status | Enum | `pending`, `confirmed`, or `canceled` |
 | totalPrice | Float | Calculated from duration × pricePerHour |
 
 ### Membership
@@ -319,7 +326,7 @@ The suite is fully autonomous — tokens are generated automatically by chaining
 |-------|------|-------------|
 | id | Int | Unique identifier |
 | userId | Int | Reference to the user (unique) |
-| plan | String | `basic`, `pro`, or `enterprise` |
+| plan | Enum | `basic`, `pro`, or `enterprise` |
 | startDate | DateTime | Plan start date |
 | endDate | DateTime | Plan expiration date |
 
@@ -360,3 +367,40 @@ This project was inherited from a previous development team. The following issue
 - **Overlap logic extracted:** Booking conflict detection extracted to `src/lib/booking.utils.ts` and reused in both reservations and space availability filter.
 - **GraphQL analytics panel:** `POST /api/graphql` exposes an `occupancyAnalytics` query (admin-only) returning occupancy rate by location and space type, accumulated revenue by period, memberships expiring in the next 30 days, and top users by booking activity.
 - **GraphQL real-time subscription:** WebSocket endpoint at `ws://localhost:3000/api/graphql` exposes a `spaceAvailability` subscription. Every time a booking is created, all connected clients receive an event with the space ID, name, location, and the booked time range.
+
+### Feedback corrections
+
+**Security:**
+- **JWT expiration:** Tokens issued on register and login now expire after 8 hours (`expiresIn: "8h"`). Previously tokens had no expiration and were valid indefinitely.
+- **Password hash exposure:** Booking list and detail responses were returning the full user object including the bcrypt hash. User fields are now explicitly selected (`id`, `name`, `email`, `role`) — password is never returned.
+
+**Logic:**
+- **Booking initial status:** New bookings are created with `pending` status instead of `confirmed`.
+- **Inactive space detail:** `GET /api/spaces/:id` now returns `404` for inactive spaces, consistent with the listing endpoint which already filtered them out.
+- **Cancellation subscription:** The real-time subscription now also fires when a booking is cancelled, with `isAvailable: true`, so connected clients are notified when a space becomes available again.
+- **Future date validation:** Creating a booking with a `startTime` in the past now returns `400`. Only future bookings are accepted.
+- **Register input validation:** Registration now validates that `name` is non-empty, `email` matches a valid format, and `password` is at least 6 characters. Returns `400` with a descriptive error.
+- **Space input validation:** Creating or updating a space validates that `name` is non-empty, `type` is one of the three valid enum values, `capacity` is greater than zero, and `pricePerHour` is greater than zero. Returns `400` on violation.
+
+**Error handling:**
+- **Cancel reservation error:** The `catch` block in the cancel route was returning `404`, masking database errors as "not found". It now returns `500` for unexpected errors.
+- **Global error handler:** Added a global Express error handler that returns all unhandled errors as JSON `500`. Previously, unhandled errors could return HTML.
+- **404 handler:** Added a catch-all route returning JSON `{ "error": "route not found" }` for unknown paths. Previously, Express returned its default HTML 404 page.
+
+**Database:**
+- **`pricePerHour` type:** Migrated from `Int` to `Float` so decimal prices (e.g. $19.50/h) are stored correctly. A manual migration with `CAST` was applied to preserve existing data.
+- **Enum types:** `role`, `space.type`, `booking.status`, and `membership.plan` are now PostgreSQL enum types enforced at the database level. Previously they were free-text strings, allowing invalid values to be stored silently.
+- **Indexes:** Added database indexes on `Booking` (`userId`, `spaceId`, `(startTime, endTime)`, `status`) and `Membership` (`endDate`) to improve query performance on filtered lookups.
+
+**TypeScript:**
+- **Strict mode enabled:** `strict: true` and `noImplicitAny: true` added to `tsconfig.json`. All resulting type errors were resolved.
+- **`req.user` typed:** The `user` property on Express `Request` is now typed as `AuthUser` instead of `any`, enabling compile-time checks on middleware-injected data.
+- **Stricter type definitions:** `role` in `AuthUser` is now a `"member" | "admin"` union literal instead of `string`. `spaceId` in `CreateBookingBody` is now `number` instead of `string`.
+
+**Tests (Bruno):**
+- **Dynamic reservation dates:** The create-reservation test now computes `startTime` and `endTime` at runtime (24 hours from now), avoiding failures caused by hardcoded past dates.
+- **Dynamic resource IDs:** Update-space, deactivate-space, and cancel-reservation tests now use `{{spaceId}}` and `{{bookingId}}` set dynamically by previous steps, instead of hardcoded IDs.
+- **Seed script:** Added `prisma/seed.ts` and `npm run seed` to provision `admin@example.com` (role: `admin`) required by the admin test cases. Uses `upsert` so it is safe to run multiple times.
+
+**Documentation:**
+- **Missing response codes:** Added `400` (validation errors), `409` (conflicts), and `500` (server errors) to all endpoints in the OpenAPI spec that were previously missing them. The spec now fully reflects the actual behavior of every route.

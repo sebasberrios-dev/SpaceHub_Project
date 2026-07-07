@@ -13,6 +13,20 @@ if (!JWT_SECRET) {
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
+  if (!name || name.trim().length === 0) {
+    return res.status(400).json({ error: "name is required" });
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: "valid email is required" });
+  }
+
+  if (!password || password.length < 6) {
+    return res
+      .status(400)
+      .json({ error: "password must be at least 6 characters" });
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
@@ -45,6 +59,7 @@ router.post("/register", async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       JWT_SECRET,
+      { expiresIn: "8h" },
     );
 
     res.status(201).json({
@@ -83,6 +98,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       JWT_SECRET,
+      { expiresIn: "8h" },
     );
 
     res.json({

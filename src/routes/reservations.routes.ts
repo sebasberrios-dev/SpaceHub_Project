@@ -8,13 +8,17 @@ const router = Router();
 
 router.post("/", authenticate, async (req, res) => {
   const { spaceId, startTime, endTime } = req.body;
-  const userId = req.user.userId;
+  const userId = req.user!.userId;
 
   const start = new Date(startTime);
   const end = new Date(endTime);
 
   if (end <= start) {
     return res.status(400).json({ error: "endTime must be after startTime" });
+  }
+
+  if (start <= new Date()) {
+    return res.status(400).json({ error: "startTime must be in the future" });
   }
 
   try {
@@ -52,9 +56,7 @@ router.post("/", authenticate, async (req, res) => {
         spaceId: parseInt(spaceId),
         startTime: start,
         endTime: end,
-        // reservations are created directly as "confirmed" since availability
-        // is verified before creation. No manual approval step is required.
-        status: "confirmed",
+        status: "pending",
         totalPrice,
       },
     });
@@ -78,10 +80,14 @@ router.post("/", authenticate, async (req, res) => {
 
 router.get("/", authenticate, async (req, res) => {
   try {
-    const where = req.user.role === "admin" ? {} : { userId: req.user.userId };
+    const where =
+      req.user!.role === "admin" ? {} : { userId: req.user!.userId };
     const bookings = await prisma.booking.findMany({
       where,
-      include: { user: true, space: true },
+      include: {
+        user: { select: { id: true, name: true, email: true, role: true } },
+        space: true,
+      },
     });
     res.json(bookings);
   } catch (error: any) {
@@ -95,14 +101,17 @@ router.get("/:id", authenticate, async (req, res) => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: parseInt(id) },
-      include: { user: true, space: true },
+      include: {
+        user: { select: { id: true, name: true, email: true, role: true } },
+        space: true,
+      },
     });
 
     if (!booking) {
       return res.status(404).json({ error: "booking not found" });
     }
 
-    if (req.user.role !== "admin" && booking.userId !== req.user.userId) {
+    if (req.user!.role !== "admin" && booking.userId !== req.user!.userId) {
       return res.status(403).json({ error: "access denied" });
     }
 
@@ -124,7 +133,7 @@ router.patch("/:id/cancel", authenticate, async (req, res) => {
       return res.status(404).json({ error: "booking not found" });
     }
 
-    if (req.user.role !== "admin" && booking.userId !== req.user.userId) {
+    if (req.user!.role !== "admin" && booking.userId !== req.user!.userId) {
       return res.status(403).json({ error: "access denied" });
     }
 
@@ -133,9 +142,26 @@ router.patch("/:id/cancel", authenticate, async (req, res) => {
       data: { status: "canceled" },
     });
 
+    const space = await prisma.space.findUnique({
+      where: { id: booking.spaceId },
+    });
+
+    if (space) {
+      pubsub.publish(BOOKING_CREATED, {
+        spaceAvailability: {
+          spaceId: space.id,
+          spaceName: space.name,
+          location: space.location,
+          isAvailable: true,
+          startTime: booking.startTime.toISOString(),
+          endTime: booking.endTime.toISOString(),
+        },
+      });
+    }
+
     res.json(updated);
   } catch (error: any) {
-    res.status(404).json({ error: "booking not found" });
+    res.status(500).json({ error: error.message });
   }
 });
 

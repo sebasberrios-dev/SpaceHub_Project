@@ -1,7 +1,7 @@
 meta {
   name: Create Reservation Conflict
   type: http
-  seq: 5
+  seq: 4
 }
 
 post {
@@ -17,8 +17,8 @@ auth:bearer {
 body:json {
   {
     "spaceId": {{spaceId}},
-    "startTime": "2026-07-01T09:00:00.000Z",
-    "endTime": "2026-07-01T11:00:00.000Z"
+    "startTime": "{{resStart}}",
+    "endTime": "{{resEnd}}"
   }
 }
 

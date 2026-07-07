@@ -1,7 +1,7 @@
 export interface AuthUser {
   userId: number;
   email: string;
-  role: string;
+  role: "member" | "admin";
 }
 
 export interface CreateSpaceBody {
@@ -13,7 +13,7 @@ export interface CreateSpaceBody {
 }
 
 export interface CreateBookingBody {
-  spaceId: string;
+  spaceId: number;
   startTime: string;
   endTime: string;
 }

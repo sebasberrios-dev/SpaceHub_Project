@@ -14,17 +14,25 @@ auth:bearer {
   token: {{token}}
 }
 
-body:json {
-  {
-    "spaceId": {{spaceId}},
-    "startTime": "2026-07-01T09:00:00.000Z",
-    "endTime": "2026-07-01T11:00:00.000Z"
-  }
+script:pre-request {
+  const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  d.setUTCHours(9, 0, 0, 0);
+  bru.setEnvVar("resStart", d.toISOString());
+  d.setUTCHours(11, 0, 0, 0);
+  bru.setEnvVar("resEnd", d.toISOString());
 }
 
 script:post-response {
   if (res.status === 201) {
     bru.setEnvVar("bookingId", res.body.id);
+  }
+}
+
+body:json {
+  {
+    "spaceId": {{spaceId}},
+    "startTime": "{{resStart}}",
+    "endTime": "{{resEnd}}"
   }
 }
 

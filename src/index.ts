@@ -71,6 +71,22 @@ useServer(
   wsServer,
 );
 
+app.use((req, res) => {
+  res.status(404).json({ error: "route not found" });
+});
+
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ) => {
+    console.error(err);
+    res.status(500).json({ error: "internal server error" });
+  },
+);
+
 httpServer.listen(PORT, () => {
   console.log(`SpaceHub API running on port ${PORT}`);
   console.log(`GraphQL HTTP:  http://localhost:${PORT}/api/graphql`);

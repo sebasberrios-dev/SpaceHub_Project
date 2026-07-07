@@ -48,7 +48,10 @@ const openApiSpec = {
           spaceId: { type: "integer" },
           startTime: { type: "string", format: "date-time" },
           endTime: { type: "string", format: "date-time" },
-          status: { type: "string", enum: ["confirmed", "canceled"] },
+          status: {
+            type: "string",
+            enum: ["pending", "confirmed", "canceled"],
+          },
           totalPrice: { type: "number" },
         },
       },
@@ -93,6 +96,22 @@ const openApiSpec = {
         },
         responses: {
           "201": { description: "Usuario creado" },
+          "400": {
+            description: "Datos inválidos (name, email o password)",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "409": {
+            description: "El email ya está en uso",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
           "500": {
             description: "Error del servidor",
             content: {
@@ -127,6 +146,14 @@ const openApiSpec = {
           "200": { description: "Login exitoso, retorna token JWT" },
           "401": {
             description: "Credenciales inválidas",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "500": {
+            description: "Error del servidor",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -172,6 +199,14 @@ const openApiSpec = {
               },
             },
           },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
       post: {
@@ -204,8 +239,25 @@ const openApiSpec = {
         },
         responses: {
           "201": { description: "Espacio creado" },
+          "400": {
+            description:
+              "Datos inválidos (name, type, capacity o pricePerHour)",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
           "401": { description: "Token requerido" },
           "403": { description: "Acceso solo para administradores" },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
     },
@@ -231,6 +283,14 @@ const openApiSpec = {
             },
           },
           "404": { description: "Espacio no encontrado" },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
       put: {
@@ -264,9 +324,26 @@ const openApiSpec = {
         },
         responses: {
           "200": { description: "Espacio actualizado" },
+          "400": {
+            description:
+              "Datos inválidos (name, type, capacity o pricePerHour)",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
           "401": { description: "Token requerido" },
           "403": { description: "Acceso solo para administradores" },
           "404": { description: "Espacio no encontrado" },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
       delete: {
@@ -286,6 +363,14 @@ const openApiSpec = {
           "401": { description: "Token requerido" },
           "403": { description: "Acceso solo para administradores" },
           "404": { description: "Espacio no encontrado" },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
     },
@@ -307,6 +392,14 @@ const openApiSpec = {
             },
           },
           "401": { description: "Token requerido" },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
       post: {
@@ -331,10 +424,26 @@ const openApiSpec = {
         },
         responses: {
           "201": { description: "Reserva creada" },
+          "400": {
+            description:
+              "Fechas inválidas (endTime antes de startTime, o startTime en el pasado)",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
           "401": { description: "Token requerido" },
-          "403": { description: "Solo miembros pueden crear reservas" },
           "404": { description: "Espacio no encontrado o inactivo" },
           "409": { description: "Conflicto de horario" },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
     },
@@ -356,6 +465,14 @@ const openApiSpec = {
           "401": { description: "Token requerido" },
           "403": { description: "Acceso denegado" },
           "404": { description: "Reserva no encontrada" },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
     },
@@ -377,6 +494,14 @@ const openApiSpec = {
           "401": { description: "Token requerido" },
           "403": { description: "No podés cancelar reservas ajenas" },
           "404": { description: "Reserva no encontrada" },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
     },
@@ -389,6 +514,14 @@ const openApiSpec = {
           "200": { description: "Lista de membresías con datos del usuario" },
           "401": { description: "Token requerido" },
           "403": { description: "Acceso solo para administradores" },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
     },
@@ -424,9 +557,25 @@ const openApiSpec = {
         },
         responses: {
           "200": { description: "Membresía actualizada" },
+          "400": {
+            description: "Plan inválido",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
           "401": { description: "Token requerido" },
           "403": { description: "Acceso solo para administradores" },
           "404": { description: "Membresía no encontrada" },
+          "500": {
+            description: "Error del servidor",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
         },
       },
     },

@@ -45,8 +45,8 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const space = await prisma.space.findUnique({
-      where: { id: parseInt(id) },
+    const space = await prisma.space.findFirst({
+      where: { id: parseInt(id), isActive: true },
     });
 
     if (!space) {
@@ -62,6 +62,26 @@ router.get("/:id", async (req, res) => {
 router.post("/", authenticate, requireAdmin, async (req, res) => {
   const { name, type, capacity, pricePerHour, location } = req.body;
 
+  const VALID_TYPES = ["individual_desk", "private_room", "business_suite"];
+
+  if (!name || name.trim().length === 0) {
+    return res.status(400).json({ error: "name is required" });
+  }
+
+  if (!type || !VALID_TYPES.includes(type)) {
+    return res.status(400).json({
+      error: "type must be individual_desk, private_room or business_suite",
+    });
+  }
+
+  if (!capacity || capacity <= 0) {
+    return res.status(400).json({ error: "capacity must be greater than 0" });
+  }
+
+  if (!pricePerHour || pricePerHour <= 0) {
+    return res.status(400).json({ error: "priceHour must be greater than 0" });
+  }
+
   try {
     const space = await prisma.space.create({
       data: { name, type, capacity, pricePerHour, location, isActive: true },
@@ -75,6 +95,28 @@ router.post("/", authenticate, requireAdmin, async (req, res) => {
 router.put("/:id", authenticate, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { name, type, capacity, pricePerHour, location } = req.body;
+
+  const VALID_TYPES = ["individual_desk", "private_room", "business_suite"];
+
+  if (name !== undefined && name.trim().length === 0) {
+    return res.status(400).json({ error: "name cannot be empty" });
+  }
+
+  if (type !== undefined && !VALID_TYPES.includes(type)) {
+    return res.status(400).json({
+      error: "type must be individual_desk, private_room, or business_suite",
+    });
+  }
+
+  if (capacity !== undefined && capacity <= 0) {
+    return res.status(400).json({ error: "capacity must be greater than 0" });
+  }
+
+  if (pricePerHour !== undefined && pricePerHour <= 0) {
+    return res
+      .status(400)
+      .json({ error: "pricePerHour must be greater than 0" });
+  }
 
   try {
     const space = await prisma.space.findUnique({

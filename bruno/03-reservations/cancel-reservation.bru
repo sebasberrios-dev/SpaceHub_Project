@@ -1,11 +1,11 @@
 meta {
   name: Cancel Reservation
   type: http
-  seq: 4
+  seq: 5
 }
 
 patch {
-  url: {{baseUrl}}/reservations/1/cancel
+  url: {{baseUrl}}/reservations/{{bookingId}}/cancel
   body: none
   auth: bearer
 }
@@ -15,10 +15,7 @@ auth:bearer {
 }
 
 tests {
-  test("status 200 or 403 or 404", function() {
-    expect([200, 403, 404]).to.include(res.status);
-  });
-  test("no token returns 401", function() {
-    // tested in cancel-reservation-unauth.bru
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
   });
 }

@@ -1,5 +1,5 @@
 declare namespace Express {
   interface Request {
-    user?: any
+    user?: import("./index").AuthUser;
   }
 }
