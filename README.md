@@ -67,6 +67,7 @@ npx prisma migrate dev
 This command creates all tables and generates the Prisma client.
 
 > If your PostgreSQL user does not have `CREATE DATABASE` permissions, create the database manually first:
+>
 > ```bash
 > psql -U <user> -c "CREATE DATABASE <database_name>;"
 > ```
@@ -83,13 +84,13 @@ The server will be available at `http://localhost:3000`.
 
 ## Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start server in development mode with hot reload |
-| `npm run build` | Compile TypeScript to JavaScript |
-| `npm start` | Start compiled production server |
-| `npm run seed` | Seed the database with the admin user required by the test suite |
-| `npm test` | Run the Bruno test suite |
+| Script          | Description                                                      |
+| --------------- | ---------------------------------------------------------------- |
+| `npm run dev`   | Start server in development mode with hot reload                 |
+| `npm run build` | Compile TypeScript to JavaScript                                 |
+| `npm start`     | Start compiled production server                                 |
+| `npm run seed`  | Seed the database with the admin user required by the test suite |
+| `npm test`      | Run the Bruno test suite                                         |
 
 ---
 
@@ -97,53 +98,53 @@ The server will be available at `http://localhost:3000`.
 
 ### Auth
 
-| Method | Path | Description | Auth |
-|--------|------|-------------|------|
-| `POST` | `/api/auth/register` | Register a new user | Public |
-| `POST` | `/api/auth/login` | Log in and receive a JWT token | Public |
+| Method | Path                 | Description                    | Auth   |
+| ------ | -------------------- | ------------------------------ | ------ |
+| `POST` | `/api/auth/register` | Register a new user            | Public |
+| `POST` | `/api/auth/login`    | Log in and receive a JWT token | Public |
 
 ### Spaces
 
-| Method | Path | Description | Auth |
-|--------|------|-------------|------|
-| `GET` | `/api/spaces` | List active spaces (supports filters) | Public |
-| `GET` | `/api/spaces/:id` | Get a single space by ID | Public |
-| `POST` | `/api/spaces` | Create a new space | Admin |
-| `PUT` | `/api/spaces/:id` | Update a space | Admin |
-| `DELETE` | `/api/spaces/:id` | Deactivate a space | Admin |
+| Method   | Path              | Description                           | Auth   |
+| -------- | ----------------- | ------------------------------------- | ------ |
+| `GET`    | `/api/spaces`     | List active spaces (supports filters) | Public |
+| `GET`    | `/api/spaces/:id` | Get a single space by ID              | Public |
+| `POST`   | `/api/spaces`     | Create a new space                    | Admin  |
+| `PUT`    | `/api/spaces/:id` | Update a space                        | Admin  |
+| `DELETE` | `/api/spaces/:id` | Deactivate a space                    | Admin  |
 
 `GET /api/spaces` supports the following query parameters:
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `type` | string | Filter by space type |
-| `minCapacity` | number | Minimum capacity |
-| `date` | date (YYYY-MM-DD) | Show only spaces available on this date |
+| Parameter     | Type              | Description                             |
+| ------------- | ----------------- | --------------------------------------- |
+| `type`        | string            | Filter by space type                    |
+| `minCapacity` | number            | Minimum capacity                        |
+| `date`        | date (YYYY-MM-DD) | Show only spaces available on this date |
 
 ### Reservations
 
-| Method | Path | Description | Auth |
-|--------|------|-------------|------|
-| `POST` | `/api/reservations` | Create a booking | Member / Admin |
-| `GET` | `/api/reservations` | List bookings | Member / Admin |
-| `GET` | `/api/reservations/:id` | Get a single booking | Member / Admin |
-| `PATCH` | `/api/reservations/:id/cancel` | Cancel a booking | Member / Admin |
+| Method  | Path                           | Description          | Auth           |
+| ------- | ------------------------------ | -------------------- | -------------- |
+| `POST`  | `/api/reservations`            | Create a booking     | Member / Admin |
+| `GET`   | `/api/reservations`            | List bookings        | Member / Admin |
+| `GET`   | `/api/reservations/:id`        | Get a single booking | Member / Admin |
+| `PATCH` | `/api/reservations/:id/cancel` | Cancel a booking     | Member / Admin |
 
 > Members can only see and cancel their own reservations. Admins can access all reservations.
 
 ### Memberships
 
-| Method | Path | Description | Auth |
-|--------|------|-------------|------|
-| `GET` | `/api/memberships` | List all memberships | Admin |
+| Method  | Path                       | Description                     | Auth  |
+| ------- | -------------------------- | ------------------------------- | ----- |
+| `GET`   | `/api/memberships`         | List all memberships            | Admin |
 | `PATCH` | `/api/memberships/:userId` | Update a user's membership plan | Admin |
 
 ### GraphQL
 
-| Transport | Endpoint | Description | Auth |
-|-----------|----------|-------------|------|
-| HTTP `POST` | `/api/graphql` | Analytics query | Admin |
-| WebSocket | `ws://localhost:3000/api/graphql` | Space availability subscription | Public |
+| Transport   | Endpoint                          | Description                     | Auth   |
+| ----------- | --------------------------------- | ------------------------------- | ------ |
+| HTTP `POST` | `/api/graphql`                    | Analytics query                 | Admin  |
+| WebSocket   | `ws://localhost:3000/api/graphql` | Space availability subscription | Public |
 
 #### Analytics query (admin only)
 
@@ -151,11 +152,34 @@ The server will be available at `http://localhost:3000`.
 query {
   occupancyAnalytics(startDate: "2026-01-01", endDate: "2026-12-31") {
     totalRevenue
-    occupancyByLocation { location spaceCount bookedHours occupancyRate }
-    occupancyByType     { type spaceCount bookedHours occupancyRate }
-    revenueByPeriod     { period revenue }
-    expiringMemberships { userId userName plan endDate }
-    topUsers            { userId userName bookingCount totalSpent }
+    occupancyByLocation {
+      location
+      spaceCount
+      bookedHours
+      occupancyRate
+    }
+    occupancyByType {
+      type
+      spaceCount
+      bookedHours
+      occupancyRate
+    }
+    revenueByPeriod {
+      period
+      revenue
+    }
+    expiringMemberships {
+      userId
+      userName
+      plan
+      endDate
+    }
+    topUsers {
+      userId
+      userName
+      bookingCount
+      totalSpent
+    }
   }
 }
 ```
@@ -167,7 +191,12 @@ query {
 ```graphql
 subscription {
   spaceAvailability {
-    spaceId spaceName location isAvailable startTime endTime
+    spaceId
+    spaceName
+    location
+    isAvailable
+    startTime
+    endTime
   }
 }
 ```
@@ -196,7 +225,12 @@ Response:
 
 ```json
 {
-  "user": { "id": 1, "name": "Jane Doe", "email": "user@example.com", "role": "member" },
+  "user": {
+    "id": 1,
+    "name": "Jane Doe",
+    "email": "user@example.com",
+    "role": "member"
+  },
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
@@ -291,44 +325,48 @@ The seed uses `upsert`, so running it multiple times is safe.
 ## Data Models
 
 ### User
-| Field | Type | Description |
-|-------|------|-------------|
-| id | Int | Unique identifier |
-| name | String | Full name |
-| email | String | Unique email |
-| password | String | bcrypt hash |
-| role | Enum | `member` or `admin` |
+
+| Field    | Type   | Description         |
+| -------- | ------ | ------------------- |
+| id       | Int    | Unique identifier   |
+| name     | String | Full name           |
+| email    | String | Unique email        |
+| password | String | bcrypt hash         |
+| role     | Enum   | `member` or `admin` |
 
 ### Space
-| Field | Type | Description |
-|-------|------|-------------|
-| id | Int | Unique identifier |
-| name | String | Space name |
-| type | Enum | `individual_desk`, `private_room`, or `business_suite` |
-| capacity | Int | Maximum number of people |
-| pricePerHour | Float | Hourly rate (supports decimals) |
-| location | String | Branch or location name |
-| isActive | Boolean | Inactive spaces are hidden from the catalog |
+
+| Field        | Type    | Description                                            |
+| ------------ | ------- | ------------------------------------------------------ |
+| id           | Int     | Unique identifier                                      |
+| name         | String  | Space name                                             |
+| type         | Enum    | `individual_desk`, `private_room`, or `business_suite` |
+| capacity     | Int     | Maximum number of people                               |
+| pricePerHour | Float   | Hourly rate (supports decimals)                        |
+| location     | String  | Branch or location name                                |
+| isActive     | Boolean | Inactive spaces are hidden from the catalog            |
 
 ### Booking
-| Field | Type | Description |
-|-------|------|-------------|
-| id | Int | Unique identifier |
-| userId | Int | Reference to the user |
-| spaceId | Int | Reference to the space |
-| startTime | DateTime | Booking start |
-| endTime | DateTime | Booking end |
-| status | Enum | `pending`, `confirmed`, or `canceled` |
-| totalPrice | Float | Calculated from duration × pricePerHour |
+
+| Field      | Type     | Description                             |
+| ---------- | -------- | --------------------------------------- |
+| id         | Int      | Unique identifier                       |
+| userId     | Int      | Reference to the user                   |
+| spaceId    | Int      | Reference to the space                  |
+| startTime  | DateTime | Booking start                           |
+| endTime    | DateTime | Booking end                             |
+| status     | Enum     | `pending`, `confirmed`, or `canceled`   |
+| totalPrice | Float    | Calculated from duration × pricePerHour |
 
 ### Membership
-| Field | Type | Description |
-|-------|------|-------------|
-| id | Int | Unique identifier |
-| userId | Int | Reference to the user (unique) |
-| plan | Enum | `basic`, `pro`, or `enterprise` |
-| startDate | DateTime | Plan start date |
-| endDate | DateTime | Plan expiration date |
+
+| Field     | Type     | Description                     |
+| --------- | -------- | ------------------------------- |
+| id        | Int      | Unique identifier               |
+| userId    | Int      | Reference to the user (unique)  |
+| plan      | Enum     | `basic`, `pro`, or `enterprise` |
+| startDate | DateTime | Plan start date                 |
+| endDate   | DateTime | Plan expiration date            |
 
 ---
 
@@ -347,7 +385,7 @@ This project was inherited from a previous development team. The following issue
 
 ### Bug fixes
 
-- **Duplicate booking conflict detection:** The overlap query condition was inverted — it was finding reservations that did *not* conflict instead of those that did. Corrected to use `AND [startTime < end, endTime > start]` for proper overlap detection.
+- **Duplicate booking conflict detection:** The overlap query condition was inverted — it was finding reservations that did _not_ conflict instead of those that did. Corrected to use `AND [startTime < end, endTime > start]` for proper overlap detection.
 - **Total price calculation:** Two errors in the price formula: the millisecond-to-hour divisor was `1000 * 3500` instead of `1000 * 60 * 60`, and `.toFixed(67)` was used instead of `.toFixed(2)`, producing numbers with 67 decimal places.
 - **Cancel before verify:** The cancel reservation handler was running `prisma.booking.update()` before checking ownership, meaning unauthorized users could cancel bookings before receiving a `403` response. Fixed to verify ownership before any database write.
 
@@ -371,10 +409,12 @@ This project was inherited from a previous development team. The following issue
 ### Feedback corrections
 
 **Security:**
+
 - **JWT expiration:** Tokens issued on register and login now expire after 8 hours (`expiresIn: "8h"`). Previously tokens had no expiration and were valid indefinitely.
 - **Password hash exposure:** Booking list and detail responses were returning the full user object including the bcrypt hash. User fields are now explicitly selected (`id`, `name`, `email`, `role`) — password is never returned.
 
 **Logic:**
+
 - **Booking initial status:** New bookings are created with `pending` status instead of `confirmed`.
 - **Inactive space detail:** `GET /api/spaces/:id` now returns `404` for inactive spaces, consistent with the listing endpoint which already filtered them out.
 - **Cancellation subscription:** The real-time subscription now also fires when a booking is cancelled, with `isAvailable: true`, so connected clients are notified when a space becomes available again.
@@ -383,24 +423,50 @@ This project was inherited from a previous development team. The following issue
 - **Space input validation:** Creating or updating a space validates that `name` is non-empty, `type` is one of the three valid enum values, `capacity` is greater than zero, and `pricePerHour` is greater than zero. Returns `400` on violation.
 
 **Error handling:**
+
 - **Cancel reservation error:** The `catch` block in the cancel route was returning `404`, masking database errors as "not found". It now returns `500` for unexpected errors.
 - **Global error handler:** Added a global Express error handler that returns all unhandled errors as JSON `500`. Previously, unhandled errors could return HTML.
 - **404 handler:** Added a catch-all route returning JSON `{ "error": "route not found" }` for unknown paths. Previously, Express returned its default HTML 404 page.
 
 **Database:**
+
 - **`pricePerHour` type:** Migrated from `Int` to `Float` so decimal prices (e.g. $19.50/h) are stored correctly. A manual migration with `CAST` was applied to preserve existing data.
 - **Enum types:** `role`, `space.type`, `booking.status`, and `membership.plan` are now PostgreSQL enum types enforced at the database level. Previously they were free-text strings, allowing invalid values to be stored silently.
 - **Indexes:** Added database indexes on `Booking` (`userId`, `spaceId`, `(startTime, endTime)`, `status`) and `Membership` (`endDate`) to improve query performance on filtered lookups.
 
 **TypeScript:**
+
 - **Strict mode enabled:** `strict: true` and `noImplicitAny: true` added to `tsconfig.json`. All resulting type errors were resolved.
 - **`req.user` typed:** The `user` property on Express `Request` is now typed as `AuthUser` instead of `any`, enabling compile-time checks on middleware-injected data.
 - **Stricter type definitions:** `role` in `AuthUser` is now a `"member" | "admin"` union literal instead of `string`. `spaceId` in `CreateBookingBody` is now `number` instead of `string`.
 
 **Tests (Bruno):**
+
 - **Dynamic reservation dates:** The create-reservation test now computes `startTime` and `endTime` at runtime (24 hours from now), avoiding failures caused by hardcoded past dates.
 - **Dynamic resource IDs:** Update-space, deactivate-space, and cancel-reservation tests now use `{{spaceId}}` and `{{bookingId}}` set dynamically by previous steps, instead of hardcoded IDs.
 - **Seed script:** Added `prisma/seed.ts` and `npm run seed` to provision `admin@example.com` (role: `admin`) required by the admin test cases. Uses `upsert` so it is safe to run multiple times.
 
 **Documentation:**
+
 - **Missing response codes:** Added `400` (validation errors), `409` (conflicts), and `500` (server errors) to all endpoints in the OpenAPI spec that were previously missing them. The spec now fully reflects the actual behavior of every route.
+
+### Feedback 2 corrections
+
+**Database:**
+
+- **`MembershipPlan` enum applied:** The `MembershipPlan` enum was defined in the Prisma schema but the `plan` field on `Membership` was still declared as `String`. Changed to `MembershipPlan @default(basic)` and applied the corresponding migration so the database now enforces valid plan values at the column level.
+
+**Tests (Bruno):**
+
+- **Dynamic membership ID:** `update-membership` was using the hardcoded path `/memberships/1`. The `register` test now saves the created user's ID to `{{userId}}` via `script:post-response`, and `update-membership` uses `{{userId}}` in the URL.
+
+**Configuration:**
+
+- **Centralized environment config:** `JWT_SECRET` was read and validated independently in three files (`index.ts`, `auth.routes.ts`, `auth.middleware.ts`). Extracted to `src/config.ts` which exports `JWT_SECRET` and `PORT` after validation. All other files now import from there.
+
+**Architecture:**
+
+- **Controller/Service pattern:** Each route file previously handled HTTP parsing, input validation, business logic, and database access in a single function. Refactored into three distinct layers:
+  - `src/routes/` — registers routes and applies middleware only
+  - `src/controllers/` — handles HTTP: reads the request, calls the service, sends the response
+  - `src/services/` — contains business logic and database access, no HTTP dependency

@@ -77,7 +77,7 @@ model Booking {
 model Membership {
   id        Int      @id @default(autoincrement())
   userId    Int      @unique
-  plan      String   @default("basic")
+  plan      MembershipPlan   @default(basic)
   startDate DateTime @default(now())
   endDate   DateTime
   createdAt DateTime @default(now())

@@ -8,16 +8,13 @@ import jwt from "jsonwebtoken";
 import swaggerUi from "swagger-ui-express";
 import openApiSpec from "./docs/openapi";
 import { schema } from "./graphql/schema";
+import { JWT_SECRET, PORT } from "./config";
 import authRoutes from "./routes/auth.routes";
 import spacesRoutes from "./routes/spaces.routes";
 import reservationsRoutes from "./routes/reservations.routes";
 import membershipsRoutes from "./routes/memberships.routes";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) throw new Error("JWT_SECRET environment variable is required");
-
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
