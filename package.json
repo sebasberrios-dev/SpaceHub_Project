@@ -7,7 +7,7 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "cd bruno && bru run --env local",
+    "test": "ts-node prisma/seed.ts && cd bruno && bru run --env local",
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
@@ -22,7 +22,8 @@
     "graphql-ws": "^5.16.2",
     "jsonwebtoken": "^9.0.2",
     "swagger-ui-express": "^5.0.1",
-    "ws": "^8.21.0"
+    "ws": "^8.21.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

@@ -4,13 +4,6 @@ import { registerUser, loginUser } from "../services/auth.service";
 export async function register(req: Request, res: Response) {
   const { name, email, password } = req.body;
 
-  if (!name || name.trim().length === 0)
-    return res.status(400).json({ error: "name is required" });
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    return res.status(400).json({ error: "valid email is required" });
-  if (!password || password.length < 6)
-    return res.status(400).json({ error: "password must be at least 6 characters" });
-
   try {
     const result = await registerUser(name, email, password);
     res.status(201).json(result);

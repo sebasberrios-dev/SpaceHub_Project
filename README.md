@@ -270,13 +270,7 @@ npm test
 
 The collection is located in `bruno/` and uses the `local` environment (`http://localhost:3000/api`).
 
-The suite is fully autonomous — tokens and resource IDs are generated dynamically via `script:post-response` blocks. Before the first run, seed the admin user:
-
-```bash
-npm run seed
-```
-
-The seed uses `upsert`, so running it multiple times is safe.
+The suite is fully autonomous. `npm test` seeds the admin user automatically before running Bruno, so no manual setup is needed — not even on a clean database. Tokens and resource IDs are generated dynamically via `script:post-response` blocks and passed between tests via environment variables.
 
 ---
 
@@ -297,6 +291,7 @@ The seed uses `upsert`, so running it multiple times is safe.
 │   └── migrations/
 ├── src/
 │   ├── index.ts                  # Entry point
+│   ├── config.ts                 # Environment variable validation
 │   ├── docs/
 │   │   └── openapi.ts            # OpenAPI spec
 │   ├── graphql/
@@ -308,7 +303,23 @@ The seed uses `upsert`, so running it multiple times is safe.
 │   │   ├── prisma.ts             # Prisma client instance
 │   │   └── booking.utils.ts      # Shared overlap filter
 │   ├── middleware/
-│   │   └── auth.middleware.ts    # authenticate, requireAdmin
+│   │   ├── auth.middleware.ts    # authenticate, requireAdmin
+│   │   └── validate.ts           # Zod validation middleware
+│   ├── validators/
+│   │   ├── auth.validators.ts
+│   │   ├── spaces.validators.ts
+│   │   ├── reservations.validators.ts
+│   │   └── memberships.validators.ts
+│   ├── controllers/
+│   │   ├── auth.controller.ts
+│   │   ├── spaces.controller.ts
+│   │   ├── reservations.controller.ts
+│   │   └── memberships.controller.ts
+│   ├── services/
+│   │   ├── auth.service.ts
+│   │   ├── spaces.service.ts
+│   │   ├── reservations.service.ts
+│   │   └── memberships.service.ts
 │   ├── routes/
 │   │   ├── auth.routes.ts
 │   │   ├── spaces.routes.ts
@@ -470,3 +481,13 @@ This project was inherited from a previous development team. The following issue
   - `src/routes/` — registers routes and applies middleware only
   - `src/controllers/` — handles HTTP: reads the request, calls the service, sends the response
   - `src/services/` — contains business logic and database access, no HTTP dependency
+
+### Feedback 3 corrections
+
+**Tests (Bruno):**
+
+- **Fully autonomous suite:** `npm test` now runs `ts-node prisma/seed.ts` automatically before launching Bruno. The seed creates the admin user via `upsert`, so the suite works on a completely clean database without any manual preparation step.
+
+**Validation:**
+
+- **Zod schemas:** Manual `if`-based field validation in controllers was replaced with declarative Zod schemas. A shared `validate` middleware in `src/middleware/validate.ts` runs the schema against `req.body` and returns a consistent `400` JSON error on failure. Schemas live in `src/validators/` — one file per domain (`auth`, `spaces`, `reservations`, `memberships`). Controllers no longer contain field-presence or format checks.
