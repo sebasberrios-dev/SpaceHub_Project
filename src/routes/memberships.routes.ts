@@ -1,16 +1,12 @@
-import { Router } from 'express'
-import { authenticate } from '../middleware/auth.middleware'
+import { Router } from "express";
+import { authenticate, requireAdmin } from "../middleware/auth.middleware";
+import { list, update } from "../controllers/memberships.controller";
+import { validate } from "../middleware/validate";
+import { updateMembershipSchema } from "../validators/memberships.validators";
 
-const router = Router()
+const router = Router();
 
-router.get('/', authenticate, async (req, res) => {
-  // TODO: query active memberships
-  res.json([])
-})
+router.get("/", authenticate, requireAdmin, list);
+router.patch("/:userId", authenticate, requireAdmin, validate(updateMembershipSchema), update);
 
-router.patch('/:userId', authenticate, async (req, res) => {
-  // TODO: update membership plan
-  res.status(501).json({ message: 'Not implemented' })
-})
-
-export default router
+export default router;

@@ -1,0 +1,27 @@
+meta {
+  name: Update Space Not Found
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/spaces/99999
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "No existe"
+  }
+}
+
+tests {
+  test("status 404", function() {
+    expect(res.status).to.equal(404);
+  });
+}

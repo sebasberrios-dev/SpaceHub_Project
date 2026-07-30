@@ -1,0 +1,17 @@
+meta {
+  name: Cancel Reservation Unauthenticated
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/reservations/1/cancel
+  body: none
+  auth: none
+}
+
+tests {
+  test("status 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

@@ -1,0 +1,37 @@
+meta {
+  name: Setup Space for Reservations
+  type: http
+  seq: 0
+}
+
+post {
+  url: {{baseUrl}}/spaces
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Sala Test Reservas",
+    "type": "private_room",
+    "capacity": 8,
+    "pricePerHour": 30,
+    "location": "Sede Test"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("spaceId", res.body.id);
+  }
+}
+
+tests {
+  test("setup: active space created for reservations", function() {
+    expect(res.status).to.equal(201);
+  });
+}

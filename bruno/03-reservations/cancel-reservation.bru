@@ -1,0 +1,21 @@
+meta {
+  name: Cancel Reservation
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/reservations/{{bookingId}}/cancel
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

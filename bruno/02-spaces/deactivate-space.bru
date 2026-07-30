@@ -1,0 +1,21 @@
+meta {
+  name: Deactivate Space
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/spaces/{{spaceId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Deactivate Space Not Found
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/spaces/99999
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status 404", function() {
+    expect(res.status).to.equal(404);
+  });
+}

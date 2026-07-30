@@ -1,0 +1,29 @@
+meta {
+  name: Create Reservation Conflict
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/reservations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "spaceId": {{spaceId}},
+    "startTime": "{{resStart}}",
+    "endTime": "{{resEnd}}"
+  }
+}
+
+tests {
+  test("status 409 conflict", function() {
+    expect(res.status).to.equal(409);
+  });
+}

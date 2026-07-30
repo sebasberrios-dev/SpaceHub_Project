@@ -1,0 +1,40 @@
+meta {
+  name: Create Space
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/spaces
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Sala A",
+    "type": "private_room",
+    "capacity": 10,
+    "pricePerHour": 50,
+    "location": "Sede Centro"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("spaceId", res.body.id);
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  test("no token returns 401", function() {
+    // tested in create-space-unauth.bru
+  });
+}

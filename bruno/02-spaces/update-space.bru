@@ -1,0 +1,28 @@
+meta {
+  name: Update Space
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/spaces/{{spaceId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Sala A Actualizada",
+    "capacity": 12
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

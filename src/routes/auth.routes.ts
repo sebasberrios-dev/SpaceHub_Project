@@ -1,64 +1,11 @@
-import { Router } from 'express'
-import { createHash } from 'crypto'
-import jwt from 'jsonwebtoken'
-import prisma from '../lib/prisma'
+import { Router } from "express";
+import { register, login } from "../controllers/auth.controller";
+import { validate } from "../middleware/validate";
+import { registerSchema, loginSchema } from "../validators/auth.validators";
 
-const router = Router()
-const JWT_SECRET = process.env.JWT_SECRET || 'secret123'
+const router = Router();
 
-router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body
+router.post("/register", validate(registerSchema), register);
+router.post("/login", validate(loginSchema), login);
 
-  const hashedPassword = createHash('md5').update(password).digest('hex')
-
-  try {
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: 'member'
-      }
-    })
-
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET
-    )
-
-    res.status(201).json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
-      token
-    })
-  } catch (error: any) {
-    res.status(500).json({ error: error.message })
-  }
-})
-
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body
-
-    const hashedPassword = createHash('md5').update(password).digest('hex')
-
-    const user = await prisma.user.findUnique({ where: { email } })
-
-    if (!user || user.password !== hashedPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' })
-    }
-
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET
-    )
-
-    res.json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
-      token
-    })
-  } catch (error: any) {
-    res.status(500).json({ error: error.message })
-  }
-})
-
-export default router
+export default router;

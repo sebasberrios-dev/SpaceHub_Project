@@ -1,0 +1,46 @@
+meta {
+  name: Create Reservation
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/reservations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:pre-request {
+  const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  d.setUTCHours(9, 0, 0, 0);
+  bru.setEnvVar("resStart", d.toISOString());
+  d.setUTCHours(11, 0, 0, 0);
+  bru.setEnvVar("resEnd", d.toISOString());
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("bookingId", res.body.id);
+  }
+}
+
+body:json {
+  {
+    "spaceId": {{spaceId}},
+    "startTime": "{{resStart}}",
+    "endTime": "{{resEnd}}"
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  test("totalPrice is a number", function() {
+    expect(res.body.totalPrice).to.be.a("number");
+  });
+}

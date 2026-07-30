@@ -1,0 +1,31 @@
+meta {
+  name: GraphQL Analytics Unauthorized
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "query": "{ occupancyAnalytics { totalRevenue } }"
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("returns error for non-admin", function() {
+    expect(res.body.errors).to.be.an("array");
+    expect(res.body.errors[0].message).to.equal("Admin access required");
+  });
+}

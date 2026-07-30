@@ -1,0 +1,20 @@
+meta {
+  name: List Spaces
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/spaces
+  body: none
+  auth: none
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("returns array", function() {
+    expect(res.body).to.be.an("array");
+  });
+}
